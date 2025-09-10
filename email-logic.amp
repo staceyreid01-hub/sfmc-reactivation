@@ -1,0 +1,94 @@
+%%[
+
+/*  RETRIEVE FIELDS */
+SET @firstName = [FirstName]
+SET @lastPlanID = [LastPlanID]
+SET @inactiveSince = [InactiveSince]
+SET @customerID = [CustomerID]
+
+/* FIRST NAME CLEANING LOGIC */
+IF NOT EMPTY(@firstName) THEN
+  SET @firstNameTrim = Trim(@firstName)
+  SET @finalName = Propercase(@firstNameTrim)
+  SET @subjectLine = CONCAT(@finalName, ", We Want You Back! 50% Off Just for You! 🚀)
+  
+ELSE
+  SET @finalName = "Customer"
+  SET @subjectLine = "We Want You Back! 50% Off Just for You! 🚀"
+
+  
+ENDIF
+
+/* LOOK UP PLAN A ID */
+SET @offerAplan = Lookup("Plan_Matrix", "OfferA", "PlanID", @lastPlanID)
+
+/* PLAN MATRIX FIELDS FOR OFFER A */
+
+SET @OfferArows = LookupRows("Plan_Matrix", "PlanID", @offerAplan)
+
+SET @rowCount = rowcount(@OfferArows)
+
+/* CHECKS IF THERE IS A ROW THAT EXISTS */
+IF @rowCount > 0 THEN
+
+  SET @row = row(@OfferArows,1)
+  /* IF YOU WANT TO RETRIEVE MORE THAN 3 FIELDS, ADD MORE ROWS AS PER BELOW */
+  /* IF YOU WANT TO RETRIEVE LESS THAN 3 FIELDS, REMOVE ROWS AS PER BELOW */
+  SET @PlanName = field(@row, "PlanName")
+  SET @GB = field(@row, "GB")
+  SET @PricePerMonth = field(@row, "PricePerMonth")
+  SET @PricePerMonthFormatted = FormatNumber(@PricePerMonth, "C")
+  SET @OfferA = field(@row, "OfferA")
+  SET @discPrice = 0.50
+  SET @newDiscAprice = Multiply(@PricePerMonth, @discPrice)
+  SET @newDiscApriceFormatted = FormatNumber(@newDiscAprice, "C")
+  
+/* IF THE ROW DOES NOT EXIST */
+ELSE
+  
+  /* THIS FUNCTION WILL CANCEL THE EMAIL OR SMS SEND */
+  RaiseError("No row was found")  
+
+ENDIF
+
+/* LOOK UP PLAN B ID */
+SET @offerBplan = Lookup("Plan_Matrix", "OfferB", "PlanID", @lastPlanID)
+
+/* PLAN MATRIX FIELDS FOR OFFER B */
+
+SET @OfferBrows = LookupRows("Plan_Matrix", "PlanID", @offerBplan)
+
+SET @rowCount = rowcount(@OfferBrows)
+
+/* CHECKS IF THERE IS A ROW THAT EXISTS */
+IF @rowCount > 0 THEN
+
+  SET @row = row(@OfferBrows,1)
+  /* IF YOU WANT TO RETRIEVE MORE THAN 3 FIELDS, ADD MORE ROWS AS PER BELOW */
+  /* IF YOU WANT TO RETRIEVE LESS THAN 3 FIELDS, REMOVE ROWS AS PER BELOW */
+  SET @BPlanName = field(@row, "PlanName")
+  SET @BGB = field(@row, "GB")
+  SET @BPricePerMonth = field(@row, "PricePerMonth")
+  SET @BPricePerMonthFormatted = FormatNumber(@BPricePerMonth, "C")
+  SET @OfferB = field(@row, "OfferB")
+  SET @discPrice = 0.50
+  SET @newDiscBprice = Multiply(@BPricePerMonth, @discPrice)
+  SET @newDiscBpriceFormatted = FormatNumber(@newDiscBprice, "C")
+
+/* IF THE ROW DOES NOT EXIST */
+ELSE
+  
+  /* THIS FUNCTION WILL CANCEL THE EMAIL OR SMS SEND */
+  RaiseError("No row was found")  
+
+ENDIF
+
+
+/* LOGIC FOR OFFER A REACTIVATION LINK */
+SET @reactivationAurl = CONCAT("telcotech.com/reactivate?custID=",@customerID "&offerID=",@OfferA)
+
+/* LOGIC FOR OFFER B REACTIVATION LINK */
+SET @reactivationBurl = CONCAT("telcotech.com/reactivate?custID=",@customerID "&offerID=",@OfferB)
+
+
+]%%
